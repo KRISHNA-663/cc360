@@ -9,6 +9,7 @@ import 'listpage.dart';
 import 'index.dart';
 import 'shop.dart';
 import 'framerlogin.dart';
+import 'welcome_screen.dart'; // <-- Add this import
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -165,7 +166,11 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
                 if (context.mounted) {
-                  Navigator.of(context).pushReplacementNamed('/login');
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                        (route) => false,
+                  );
                 }
               },
               style: OutlinedButton.styleFrom(

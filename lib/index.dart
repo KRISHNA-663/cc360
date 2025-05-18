@@ -1,6 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:niral_prj/shop.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'listpage.dart';
+import 'shop.dart';
 import 'profilepage.dart';
 
 class HomePage extends StatefulWidget {
@@ -12,32 +15,43 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  String _userName = '';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserName();
+  }
+
+  Future<void> fetchUserName() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final uid = user.uid;
+      final doc = await FirebaseFirestore.instance.collection("users").doc(uid).get();
+      final data = doc.data();
+      if (data != null) {
+        setState(() {
+          _userName = data['name'] ?? 'User';
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
+    setState(() => _selectedIndex = index);
     switch (index) {
       case 0:
         break;
       case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ListPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ListPage()));
         break;
       case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ShopPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ShopPage()));
         break;
       case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfilePage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
         break;
     }
   }
@@ -50,157 +64,169 @@ class _HomePageState extends State<HomePage> {
         child: AppBar(
           backgroundColor: const Color(0xFF055B1D),
           elevation: 0,
-          automaticallyImplyLeading: false, // ❌ Removes back arrow
+          automaticallyImplyLeading: false,
           flexibleSpace: SafeArea(
             child: Container(
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text(
-                    'Welcome',
-                    style: TextStyle(
+                    _isLoading ? 'Loading...' : 'Welcome, $_userName',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 24,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ProfilePage()),
+                      );
+                    },
+                    child: const Icon(Icons.person, color: Colors.white),
                   ),
+
                 ],
               ),
             ),
           ),
         ),
       ),
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 20),
-                child: const Text(
-                  'Find the best products for your needs',
-                  style: TextStyle(fontSize: 20, color: Colors.black),
-                ),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF055B1D),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Get My Product',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ShopPage()),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.grey),
-                  backgroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text(
-                      'Shop',
-                      style: TextStyle(color: Colors.black, fontSize: 16),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(Icons.shopping_cart, color: Colors.black, size: 20),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: const [
-                  Icon(Icons.category_outlined, color: Color(0xFF055B1D), size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Available Products',
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset('assets/grass.jpg', fit: BoxFit.cover),
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: Container(color: Colors.black.withOpacity(0.25)),
+          ),
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    '🌱 Find the best products for your needs',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF055B1D),
+                      color: Colors.white,
                     ),
                   ),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ListPage()));
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        image: const DecorationImage(
+                          image: AssetImage('assets/grass_border.png'),
+                          fit: BoxFit.fill,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Get My Product',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ShopPage()));
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        image: const DecorationImage(
+                          image: AssetImage('assets/grass_border.png'),
+                          fit: BoxFit.fill,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.shopping_cart, color: Colors.black),
+                          SizedBox(width: 8),
+                          Text(
+                            'Shop',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: const [
+                      Icon(Icons.category_outlined, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Available Products',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.8,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                    children: const [
+                      ProductCard(name: 'Rice Seed', price: 'Rs 10/kg', imagePath: 'assets/Rice_Seed.jpeg'),
+                      ProductCard(name: 'Lemon Tree', price: 'Rs 10/kg', imagePath: 'assets/lemon_tree.jpeg'),
+                      ProductCard(name: 'Wheat Seed', price: 'Rs 10/kg', imagePath: 'assets/wheat.jpeg'),
+                      ProductCard(name: 'Cherry Tree', price: 'Rs 10/kg', imagePath: 'assets/cherry.jpeg'),
+                      ProductCard(name: 'Mango', price: 'Rs 10/kg', imagePath: 'assets/mango.jpeg'),
+                      ProductCard(name: 'Dry Chilly', price: 'Rs 10/kg', imagePath: 'assets/drychilly2.jpeg'),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
-              const SizedBox(height: 16),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                childAspectRatio: 0.9,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                children: const [
-                  ProductCard(name: 'Rice Seed', price: 'Rs 10/kg', imagePath: 'assets/Rice_Seed.jpeg'),
-                  ProductCard(name: 'Lemon Tree', price: 'Rs 10/kg', imagePath: 'assets/lemon_tree.jpeg'),
-                  ProductCard(name: 'Weat Seed', price: 'Rs 10/kg', imagePath: 'assets/wheat.jpeg'),
-                  ProductCard(name: 'Cherry Tree', price: 'Rs 10/kg', imagePath: 'assets/cherry.jpeg'),
-                  ProductCard(name: 'Mango', price: 'Rs 10/kg', imagePath: 'assets/mango.jpeg'),
-                  ProductCard(name: 'Dry Chilly', price: 'Rs 10/kg', imagePath: 'assets/drychilly2.jpeg'),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 3,
-              spreadRadius: 1,
             ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF055B1D),
-          unselectedItemColor: Colors.grey,
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
-            BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-          ],
-        ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: const Color(0xFF055B1D),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+        ],
       ),
     );
   }
@@ -221,50 +247,34 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ShopPage()),
-        );
-      },
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ShopPage())),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFDCE8D6),
-          borderRadius: BorderRadius.circular(10),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 3,
-              spreadRadius: 1,
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, spreadRadius: 2, offset: const Offset(2, 4)),
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                ),
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(child: Text('Image Not Found'));
-                  },
-                ),
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Image.asset(
+                imagePath,
+                height: 120,
+                fit: BoxFit.cover,
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(price, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 4),
+                  Text(price, style: const TextStyle(fontSize: 13, color: Colors.grey)),
                 ],
               ),
             ),
