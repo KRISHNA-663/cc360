@@ -1,14 +1,13 @@
+import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-import 'package:niral_prj/shop.dart';
 import 'listpage.dart';
 import 'index.dart';
+import 'shop.dart';
 import 'framerlogin.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -20,64 +19,51 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 3;
-  User? _currentUser;
-  String? _profileImageUrl;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final ImagePicker _picker = ImagePicker();
+  String name = "";
+  String email = "";
+  String location = "";
+  String? profilePhotoBase64;
+  bool isLoading = true;
+
+  final uid = FirebaseAuth.instance.currentUser!.uid;
 
   @override
   void initState() {
     super.initState();
-    _currentUser = FirebaseAuth.instance.currentUser;
-    _loadProfileImage();
+    fetchProfile();
   }
 
-  Future<void> _loadProfileImage() async {
-    if (_currentUser == null) return;
+  Future<void> fetchProfile() async {
+    final user = FirebaseAuth.instance.currentUser!;
+    final doc = await FirebaseFirestore.instance.collection("users").doc(uid).get();
+    final data = doc.data();
 
-    final doc = await _firestore.collection('users').doc(_currentUser!.uid).get();
-    if (doc.exists) {
+    if (data != null) {
       setState(() {
-        _profileImageUrl = doc.data()?['profileImageUrl'] as String?;
+        name = data['name'] ?? '';
+        location = data['location'] ?? '';
+        profilePhotoBase64 = data['profilePhoto'];
+        email = user.email ?? '';
+        isLoading = false;
       });
     }
   }
 
-  String _getUserNameFromEmail(String? email) {
-    if (email == null || !email.contains('@')) return 'User';
-    return email.split('@')[0];
-  }
-
   Future<void> _pickAndUploadImage() async {
-    if (_currentUser == null) return;
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-    final XFile? imageFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (imageFile == null) return; // User cancelled
+    if (pickedFile != null) {
+      final bytes = await File(pickedFile.path).readAsBytes();
+      final base64Image = base64Encode(bytes);
 
-    File file = File(imageFile.path);
-
-    try {
-      final storageRef = FirebaseStorage.instance.ref().child('profile_images/${_currentUser!.uid}.jpg');
-
-      // Upload file
-      await storageRef.putFile(file);
-
-      // Get download URL
-      String downloadUrl = await storageRef.getDownloadURL();
-
-      // Save URL to Firestore
-      await _firestore.collection('users').doc(_currentUser!.uid).set({
-        'profileImageUrl': downloadUrl,
-      }, SetOptions(merge: true));
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'profilePhoto': base64Image,
+      });
 
       setState(() {
-        _profileImageUrl = downloadUrl;
+        profilePhotoBase64 = base64Image;
       });
-    } catch (e) {
-      print('Error uploading profile image: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to upload image')),
-      );
     }
   }
 
@@ -95,26 +81,36 @@ class _ProfilePageState extends State<ProfilePage> {
         );
         break;
       case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ListPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ListPage()));
         break;
       case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ShopPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ShopPage()));
         break;
       case 3:
-      // Already here
         break;
     }
   }
 
+  void _navigateToEditProfile() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EditProfilePage(name: name, location: location)),
+    );
+    fetchProfile();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final String userName = _getUserNameFromEmail(_currentUser?.email);
+    final imageWidget = profilePhotoBase64 != null
+        ? CircleAvatar(
+      radius: 50,
+      backgroundImage: MemoryImage(base64Decode(profilePhotoBase64!)),
+    )
+        : CircleAvatar(
+      radius: 50,
+      backgroundColor: Colors.grey.withOpacity(0.2),
+      child: const Icon(Icons.person, size: 60, color: Colors.grey),
+    );
 
     return Scaffold(
       appBar: PreferredSize(
@@ -130,19 +126,8 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
-                  Text(
-                    'Welcome',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  Text('Welcome', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  Icon(Icons.person, color: Colors.white, size: 24),
                 ],
               ),
             ),
@@ -150,134 +135,148 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 20),
-                child: const Text(
-                  'Your Profile',
-                  style: TextStyle(fontSize: 20, color: Colors.black),
-                ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 20),
+            GestureDetector(onTap: _pickAndUploadImage, child: imageWidget),
+            const SizedBox(height: 20),
+            Text("Name: ${name.isNotEmpty ? name : 'Not set'}", style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            Text("Email: $email", style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            Text("Location: ${location.isNotEmpty ? location : 'Not set'}", style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _navigateToEditProfile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF055B1D),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              const SizedBox(height: 20),
-
-              // Profile Image with tap to change
-              GestureDetector(
-                onTap: _pickAndUploadImage,
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.grey.withOpacity(0.2),
-                  backgroundImage:
-                  _profileImageUrl != null ? NetworkImage(_profileImageUrl!) : null,
-                  child: _profileImageUrl == null
-                      ? const Icon(Icons.person, size: 60, color: Colors.grey)
-                      : null,
-                ),
+              child: const Text('Edit Profile', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.of(context).pushReplacementNamed('/login');
+                }
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.grey),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Tap image to change',
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Text('Logout', style: TextStyle(color: Colors.black, fontSize: 16)),
+                  SizedBox(width: 8),
+                  Icon(Icons.logout, color: Colors.black, size: 20),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+              },
+              child: const Text(
+                'Do you want to be a seller?',
+                style: TextStyle(fontSize: 14, color: Color(0xFF055B1D)),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
-
-              const SizedBox(height: 20),
-
-              Text(
-                'Hello, $userName',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Email: ${_currentUser?.email ?? "Not available"}',
-                style: const TextStyle(fontSize: 16, color: Colors.black),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Location: Coimbatore',
-                style: TextStyle(fontSize: 16, color: Colors.black),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  // TODO: Add edit profile functionality
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF055B1D),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text(
-                  'Edit Profile',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.grey),
-                  backgroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text('Logout', style: TextStyle(color: Colors.black, fontSize: 16)),
-                    SizedBox(width: 8),
-                    Icon(Icons.logout, color: Colors.black, size: 20),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
-                },
-                child: const Text(
-                  'Do you want to be a seller?',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF055B1D)),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 3, spreadRadius: 1)],
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF055B1D),
-          unselectedItemColor: Colors.grey,
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
-            BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-          ],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: const Color(0xFF055B1D),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+        ],
+      ),
+    );
+  }
+}
+
+class EditProfilePage extends StatefulWidget {
+  final String name;
+  final String location;
+
+  const EditProfilePage({Key? key, required this.name, required this.location}) : super(key: key);
+
+  @override
+  State<EditProfilePage> createState() => _EditProfilePageState();
+}
+
+class _EditProfilePageState extends State<EditProfilePage> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController nameController;
+  late TextEditingController locationController;
+
+  @override
+  void initState() {
+    super.initState();
+    nameController = TextEditingController(text: widget.name);
+    locationController = TextEditingController(text: widget.location);
+  }
+
+  Future<void> _saveProfile() async {
+    if (_formKey.currentState!.validate()) {
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      await FirebaseFirestore.instance.collection("users").doc(uid).update({
+        'name': nameController.text.trim(),
+        'location': locationController.text.trim(),
+      });
+      if (context.mounted) Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Edit Profile"), backgroundColor: const Color(0xFF055B1D)),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: "Name"),
+                validator: (value) => value!.isEmpty ? 'Enter name' : null,
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: locationController,
+                decoration: const InputDecoration(labelText: "Location"),
+                validator: (value) => value!.isEmpty ? 'Enter location' : null,
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _saveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF055B1D),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                ),
+                child: const Text("Save"),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -20,14 +20,16 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   google_sign_in: ^6.2.1
   cloud_firestore: ^4.14.0
-  firebase_storage: ^11.0.0
-
 
 
   # ✅ Add explicit versions:
-  firebase_core: ^2.30.0
-  firebase_auth: ^4.19.0
+
   firebase_auth_web: ^5.8.11
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.20.0
+  firebase_storage: ^11.7.7
+
+
 
 dev_dependencies:
   flutter_test:
