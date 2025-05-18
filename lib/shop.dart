@@ -8,7 +8,7 @@ import 'package:niral_prj/index.dart';
 import 'package:niral_prj/wheat.dart';
 import 'package:niral_prj/rice.dart';
 import 'package:niral_prj/cherry.dart';
-import 'package:niral_prj/favorite_page.dart'; // ✅ Import your new FavoritePage
+import 'package:niral_prj/favorite_page.dart';
 
 class ShopPage extends StatefulWidget {
   const ShopPage({Key? key}) : super(key: key);
@@ -19,8 +19,26 @@ class ShopPage extends StatefulWidget {
 
 class _ShopPageState extends State<ShopPage> {
   int _selectedIndex = 2;
+  List<Map<String, String>> favoriteItems = [];
 
-  List<Map<String, String>> favoriteItems = []; // ✅ Store favorites
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -32,7 +50,7 @@ class _ShopPageState extends State<ShopPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
-          (route) => false,
+              (route) => false,
         );
         break;
       case 1:
@@ -95,6 +113,20 @@ class _ShopPageState extends State<ShopPage> {
 
   @override
   Widget build(BuildContext context) {
+    final products = [
+      {'name': 'Rice Seed', 'image': 'assets/Rice_Seed.jpeg'},
+      {'name': 'Lemon Tree', 'image': 'assets/lemon_tree.jpeg'},
+      {'name': 'Weat Seed', 'image': 'assets/wheat.jpeg'},
+      {'name': 'Cherry Tree', 'image': 'assets/cherry.jpeg'},
+      {'name': 'Dry Chilly', 'image': 'assets/drychilly2.jpeg'},
+      {'name': 'Mango', 'image': 'assets/mango.jpeg'},
+    ];
+
+    final filteredProducts = products.where((product) {
+      final name = product['name']!.toLowerCase();
+      return name.contains(_searchQuery);
+    }).toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: PreferredSize(
@@ -157,8 +189,9 @@ class _ShopPageState extends State<ShopPage> {
                 border: Border.all(color: const Color(0xFFDCE8D6)),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const TextField(
-                decoration: InputDecoration(
+              child: TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
                   hintText: 'Search...',
                   hintStyle: TextStyle(color: Colors.black, fontSize: 14),
                   prefixIcon: Icon(Icons.search, color: Colors.black),
@@ -173,14 +206,9 @@ class _ShopPageState extends State<ShopPage> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                children: [
-                  _buildProductCard('Rice Seed', 'assets/Rice_Seed.jpeg'),
-                  _buildProductCard('Lemon Tree', 'assets/lemon_tree.jpeg'),
-                  _buildProductCard('Weat Seed', 'assets/wheat.jpeg'),
-                  _buildProductCard('Cherry Tree', 'assets/cherry.jpeg'),
-                  _buildProductCard('Dry Chilly', 'assets/drychilly2.jpeg'),
-                  _buildProductCard('Mango', 'assets/mango.jpeg'),
-                ],
+                children: filteredProducts.map((product) {
+                  return _buildProductCard(product['name']!, product['image']!);
+                }).toList(),
               ),
             ),
           ],
@@ -198,13 +226,10 @@ class _ShopPageState extends State<ShopPage> {
           ],
         ),
         child: BottomNavigationBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF055B1D),
-          unselectedItemColor: Colors.grey,
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
+          selectedItemColor: const Color(0xFF055B1D),
+          unselectedItemColor: Colors.grey,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
