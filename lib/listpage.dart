@@ -21,6 +21,30 @@ class _ListPageState extends State<ListPage> {
   String _searchQuery = '';
   final Future<List<CommodityPrice>> _futurePrices = ApiService.fetchPrices();
 
+  final Map<String, String> _commodityAliases = {
+    'Cauliflower': 'Cauliflower',
+    'Wheat': 'Wheat',
+    'Cotton': 'Cotton',
+    'Tomato': 'Tomato',
+    'Capsicum': 'Capsicum',
+    'Pumpkin': 'Pumpkin',
+    'Banana': 'Banana',
+    'Carrot': 'Carrot',
+    'Garlic': 'Garlic',
+    'Mango': 'Mango',
+    'Onion': 'Onion',
+    'Mushrooms': 'Mushrooms',
+    'Beans': 'Beans',
+    'Brinjal': 'Brinjal',
+    'Potato': 'Potato',
+    'Rice': 'Rice',
+    'Mustard': 'Mustard',
+    'Cabbage': 'Cabbage',
+    'Apple': 'Apple',
+    'Pomegranate': 'Pomegranate',
+    // Add more aliases here if needed
+  };
+
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
 
@@ -51,14 +75,27 @@ class _ListPageState extends State<ListPage> {
     }
   }
 
-  String _getPrice(List<CommodityPrice> prices, String productName) {
+  String _getPriceForProduct(List<CommodityPrice> prices, String productName) {
+    final alias = _commodityAliases[productName] ?? productName;
+    final normalizedName = alias.toLowerCase().trim();
+
     try {
-      final item = prices.firstWhere(
-            (element) => element.name.toLowerCase().contains(productName.toLowerCase()),
+      final exactMatch = prices.firstWhere(
+            (e) => e.name.toLowerCase().trim() == normalizedName,
+        orElse: () => throw Exception("No exact match"),
       );
-      return 'Rs ${item.price}/Kg';
+      final adjustedPrice = (double.tryParse(exactMatch.price) ?? 0) / 100;
+      return 'Rs ${adjustedPrice.toStringAsFixed(2)}/kg';
     } catch (_) {
-      return 'Rs 10/Kg';
+      try {
+        final partialMatch = prices.firstWhere(
+              (e) => e.name.toLowerCase().contains(normalizedName),
+        );
+        final adjustedPrice = (double.tryParse(partialMatch.price) ?? 0) / 100;
+        return 'Rs ${adjustedPrice.toStringAsFixed(2)}/kg';
+      } catch (e) {
+        return 'Price N/A';
+      }
     }
   }
 
@@ -140,13 +177,28 @@ class _ListPageState extends State<ListPage> {
                               color: const Color(0xFFDCE8D6),
                               onTap: () {
                                 if (product.name.contains('Wheat')) {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const WheatSeedPage()));
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                          const WheatSeedPage()));
                                 } else if (product.name.contains('Cherry')) {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const CherrySeedPage()));
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                          const CherrySeedPage()));
                                 } else if (product.name.contains('Lemon')) {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const LemonSeedPage()));
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                          const LemonSeedPage()));
                                 } else {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const ShopPage()));
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => const ShopPage()));
                                 }
                               },
                             ),
@@ -178,26 +230,46 @@ class _ListPageState extends State<ListPage> {
 
   List<Product> _filteredProducts(List<CommodityPrice> prices) {
     final allProducts = [
-      Product('assets/cauliflower.jpeg', 'Cauliflower', 'Brassica family', _getPrice(prices, 'Cauliflower')),
-      Product('assets/wheat_og.jpeg', 'Wheat', 'Triticum family', _getPrice(prices, 'Wheat')),
-      Product('assets/cotton.jpeg', 'Cotton', 'Gossypium family', _getPrice(prices, 'Cotton')),
-      Product('assets/tomato.jpg', 'Tomato', 'Solanaceae family', _getPrice(prices, 'Tomato')),
-      Product('assets/capsicum.jpg', 'Capsicum', 'Capsicum family', _getPrice(prices, 'Capsicum')),
-      Product('assets/pumpkin.jpg', 'Pumpkin', 'Cucurbitaceae family', _getPrice(prices, 'Pumpkin')),
-      Product('assets/banana.jpg', 'Banana', 'Musaceae family', _getPrice(prices, 'Banana')),
-      Product('assets/carrot.jpg', 'Carrot', 'Apiaceae family', _getPrice(prices, 'Carrot')),
-      Product('assets/garlic.jpeg', 'Garlic', 'Amaryllidaceae family', _getPrice(prices, 'Garlic')),
-      Product('assets/mango.jpeg', 'Mango', 'Anacardiaceae family', _getPrice(prices, 'Mango')),
-      Product('assets/onion.jpeg', 'Onion', 'Amaryllidaceae family', _getPrice(prices, 'Onion')),
-      Product('assets/mashrooms.jpg', 'Mushrooms', 'Fungi family', _getPrice(prices, 'Mushrooms')),
-      Product('assets/beans.jpg', 'Beans', 'Fabaceae family', _getPrice(prices, 'Beans')),
-      Product('assets/brinjal.jpg', 'Brinjal', 'Solanaceae family', _getPrice(prices, 'Brinjal')),
-      Product('assets/potato.jpeg', 'Potato', 'Solanaceae family', _getPrice(prices, 'Potato')),
-      Product('assets/rice.jpeg', 'Rice', 'Oryza family', _getPrice(prices, 'Rice')),
-      Product('assets/Mustard.jpeg', 'Mustard', 'Brassicaceae family', _getPrice(prices, 'Mustard')),
-      Product('assets/cabbage.jpeg', 'Cabbage', 'Brassica family', _getPrice(prices, 'Cabbage')),
-      Product('assets/apple.jpg', 'Apple', 'Rosaceae family', _getPrice(prices, 'Apple')),
-      Product('assets/pomegranate.jpeg', 'Pomegranate', 'Lythraceae family', _getPrice(prices, 'Pomegranate')),
+      Product('assets/cauliflower.jpeg', 'Cauliflower', 'Brassica family',
+          _getPriceForProduct(prices, 'Cauliflower')),
+      Product('assets/wheat_og.jpeg', 'Wheat', 'Triticum family',
+          _getPriceForProduct(prices, 'Wheat')),
+      Product('assets/cotton.jpeg', 'Cotton', 'Gossypium family',
+          _getPriceForProduct(prices, 'Cotton')),
+      Product('assets/tomato.jpg', 'Tomato', 'Solanaceae family',
+          _getPriceForProduct(prices, 'Tomato')),
+      Product('assets/capsicum.jpg', 'Capsicum', 'Capsicum family',
+          _getPriceForProduct(prices, 'Capsicum')),
+      Product('assets/pumpkin.jpg', 'Pumpkin', 'Cucurbitaceae family',
+          _getPriceForProduct(prices, 'Pumpkin')),
+      Product('assets/banana.jpg', 'Banana', 'Musaceae family',
+          _getPriceForProduct(prices, 'Banana')),
+      Product('assets/carrot.jpg', 'Carrot', 'Apiaceae family',
+          _getPriceForProduct(prices, 'Carrot')),
+      Product('assets/garlic.jpeg', 'Garlic', 'Amaryllidaceae family',
+          _getPriceForProduct(prices, 'Garlic')),
+      Product('assets/mango.jpeg', 'Mango', 'Anacardiaceae family',
+          _getPriceForProduct(prices, 'Mango')),
+      Product('assets/onion.jpeg', 'Onion', 'Amaryllidaceae family',
+          _getPriceForProduct(prices, 'Onion')),
+      Product('assets/mashrooms.jpg', 'Mushrooms', 'Fungi family',
+          _getPriceForProduct(prices, 'Mushrooms')),
+      Product('assets/beans.jpg', 'Beans', 'Fabaceae family',
+          _getPriceForProduct(prices, 'Beans')),
+      Product('assets/brinjal.jpg', 'Brinjal', 'Solanaceae family',
+          _getPriceForProduct(prices, 'Brinjal')),
+      Product('assets/potato.jpeg', 'Potato', 'Solanaceae family',
+          _getPriceForProduct(prices, 'Potato')),
+      Product('assets/rice.jpeg', 'Rice', 'Oryza family',
+          _getPriceForProduct(prices, 'Rice')),
+      Product('assets/Mustard.jpeg', 'Mustard', 'Brassicaceae family',
+          _getPriceForProduct(prices, 'Mustard')),
+      Product('assets/cabbage.jpeg', 'Cabbage', 'Brassica family',
+          _getPriceForProduct(prices, 'Cabbage')),
+      Product('assets/apple.jpg', 'Apple', 'Rosaceae family',
+          _getPriceForProduct(prices, 'Apple')),
+      Product('assets/pomegranate.jpeg', 'Pomegranate', 'Lythraceae family',
+          _getPriceForProduct(prices, 'Pomegranate')),
     ];
 
     return allProducts
@@ -246,7 +318,8 @@ class ProductCard extends StatelessWidget {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+              borderRadius:
+              const BorderRadius.horizontal(left: Radius.circular(12)),
               child: Image.asset(image, height: 80, width: 80, fit: BoxFit.cover),
             ),
             const SizedBox(width: 12),
@@ -254,9 +327,15 @@ class ProductCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  Text(family, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-                  Text(price, style: const TextStyle(fontSize: 13, color: Colors.black)),
+                  Text(name,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(family,
+                      style:
+                      const TextStyle(fontSize: 13, color: Colors.grey)),
+                  Text(price,
+                      style:
+                      const TextStyle(fontSize: 13, color: Colors.black)),
                 ],
               ),
             ),

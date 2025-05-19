@@ -6,7 +6,7 @@ class ApiService {
   static Future<List<CommodityPrice>> fetchPrices() async {
     final url = Uri.parse(
         'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070'
-            '?api-key=aaaa&format=json&limit=100' //579b464db66ec23bdd00000183407be2861346244451e246e498ee53
+            '?api-key=579b464db66ec23bdd00000183407be2861346244451e246e498ee53&format=json&limit=100' //579b464db66ec23bdd00000183407be2861346244451e246e498ee53
     );
 
     final response = await http.get(url);

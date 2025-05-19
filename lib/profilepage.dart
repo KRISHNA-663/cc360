@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui'; // For blur effect
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -114,92 +115,109 @@ class _ProfilePageState extends State<ProfilePage> {
     );
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80.0),
         child: AppBar(
-          backgroundColor: const Color(0xFF055B1D),
+          backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-          flexibleSpace: SafeArea(
-            child: Container(
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text('Welcome', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  Icon(Icons.person, color: Colors.white, size: 24),
-                ],
+          flexibleSpace: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+              child: Container(
+                color: const Color(0xFF055B1D).withOpacity(0.75),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isLoading ? 'Loading...' : 'Welcome, $name',
+                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const Icon(Icons.person, color: Colors.white, size: 24),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-      backgroundColor: Colors.white,
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 20),
-            GestureDetector(onTap: _pickAndUploadImage, child: imageWidget),
-            const SizedBox(height: 20),
-            Text("Name: ${name.isNotEmpty ? name : 'Not set'}", style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            Text("Email: $email", style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            Text("Location: ${location.isNotEmpty ? location : 'Not set'}", style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _navigateToEditProfile,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF055B1D),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Edit Profile', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset('assets/grass.jpg', fit: BoxFit.cover),
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: Container(color: Colors.black.withOpacity(0.25)),
+          ),
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 100.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                GestureDetector(onTap: _pickAndUploadImage, child: imageWidget),
+                const SizedBox(height: 20),
+                Text("Name: ${name.isNotEmpty ? name : 'Not set'}", style: const TextStyle(fontSize: 16, color: Colors.white)),
+                const SizedBox(height: 8),
+                Text("Email: $email", style: const TextStyle(fontSize: 16, color: Colors.white)),
+                const SizedBox(height: 8),
+                Text("Location: ${location.isNotEmpty ? location : 'Not set'}", style: const TextStyle(fontSize: 16, color: Colors.white)),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _navigateToEditProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF055B1D),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Edit Profile', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    if (context.mounted) {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                            (route) => false,
+                      );
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.grey),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Text('Logout', style: TextStyle(color: Colors.black, fontSize: 16)),
+                      SizedBox(width: 8),
+                      Icon(Icons.logout, color: Colors.black, size: 20),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+                  },
+                  child: const Text(
+                    'Do you want to be a seller?',
+                    style: TextStyle(fontSize: 14, color: Color(0xFF055B1D)),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                if (context.mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-                        (route) => false,
-                  );
-                }
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.grey),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text('Logout', style: TextStyle(color: Colors.black, fontSize: 16)),
-                  SizedBox(width: 8),
-                  Icon(Icons.logout, color: Colors.black, size: 20),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginPage()));
-              },
-              child: const Text(
-                'Do you want to be a seller?',
-                style: TextStyle(fontSize: 14, color: Color(0xFF055B1D)),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -217,6 +235,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
+// EditProfilePage code unchanged
 class EditProfilePage extends StatefulWidget {
   final String name;
   final String location;
@@ -253,37 +272,38 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit Profile"), backgroundColor: const Color(0xFF055B1D)),
-      body: Padding(
+        appBar: AppBar(title: const Text("Edit Profile"), backgroundColor: const Color(0xFF055B1D)),
+        body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Name"),
-                validator: (value) => value!.isEmpty ? 'Enter name' : null,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: locationController,
-                decoration: const InputDecoration(labelText: "Location"),
-                validator: (value) => value!.isEmpty ? 'Enter location' : null,
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: _saveProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF055B1D),
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                ),
-                child: const Text("Save"),
-              ),
-            ],
-          ),
+    child: Form(
+    key: _formKey,
+    child: Column(
+    children: [
+    TextFormField(
+    controller: nameController,
+    decoration: const InputDecoration(labelText: "Name"),
+    validator: (value) => value!.isEmpty ? 'Enter name' : null,
+    ),
+    const SizedBox(height: 20),
+    TextFormField(
+    controller: locationController,
+    decoration: const InputDecoration(labelText: "Location"),
+    validator: (value) => value!.isEmpty ? 'Enter location' : null,
+    ),
+    const SizedBox(height: 30),
+      ElevatedButton(
+        onPressed: _saveProfile,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF055B1D),
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
         ),
+        child: const Text("Save", style: TextStyle(fontSize: 16)),
       ),
+    ],
+    ),
+    ),
+        ),
     );
   }
 }
+

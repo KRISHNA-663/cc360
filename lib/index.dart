@@ -19,15 +19,20 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   String _userName = '';
   bool _isLoading = true;
-
-  // Initialize _futurePrices immediately to avoid LateInitializationError
   late Future<List<CommodityPrice>> _futurePrices = ApiService.fetchPrices();
+
+  // Commodity aliases to handle spelling mismatches or alternate names
+  final Map<String, String> _commodityAliases = {
+    "Mushrooms": "Mashrooms",
+    "Ladies Finger": "Bhindi(Ladies Finger)",
+    "Chickpeas": "Kabuli Chana(Chickpeas-White)",
+    // Add more as needed
+  };
 
   @override
   void initState() {
     super.initState();
     fetchUserName();
-    // _futurePrices is already initialized above
   }
 
   Future<void> fetchUserName() async {
@@ -48,8 +53,6 @@ class _HomePageState extends State<HomePage> {
   void _onItemTapped(int index) {
     setState(() => _selectedIndex = index);
     switch (index) {
-      case 0:
-        break;
       case 1:
         Navigator.push(context, MaterialPageRoute(builder: (context) => const ListPage()));
         break;
@@ -61,19 +64,30 @@ class _HomePageState extends State<HomePage> {
         break;
     }
   }
-
-  // ✔️ Improved version for better matching
   String _getPriceForProduct(List<CommodityPrice> prices, String productName) {
+    final alias = _commodityAliases[productName] ?? productName;
+    final normalizedName = alias.toLowerCase().trim();
+
     try {
-      final commodity = prices.firstWhere(
-            (element) =>
-            element.name.toLowerCase().contains(productName.toLowerCase()),
+      final exactMatch = prices.firstWhere(
+            (e) => e.name.toLowerCase().trim() == normalizedName,
+        orElse: () => throw Exception("No exact match"),
       );
-      return 'Rs ${commodity.price}/kg';
-    } catch (e) {
-      return 'Price N/A';
+      final adjustedPrice = (double.tryParse(exactMatch.price) ?? 0) / 100;
+      return 'Rs ${adjustedPrice.toStringAsFixed(2)}/kg';
+    } catch (_) {
+      try {
+        final partialMatch = prices.firstWhere(
+              (e) => e.name.toLowerCase().contains(normalizedName),
+        );
+        final adjustedPrice = (double.tryParse(partialMatch.price) ?? 0) / 100;
+        return 'Rs ${adjustedPrice.toStringAsFixed(2)}/kg';
+      } catch (e) {
+        return 'Price N/A';
+      }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -101,10 +115,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ProfilePage()),
-                      );
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
                     },
                     child: const Icon(Icons.person, color: Colors.white),
                   ),
@@ -130,11 +141,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   const Text(
                     '🌱 Find the best products for your needs',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   const SizedBox(height: 20),
                   GestureDetector(
@@ -154,11 +161,7 @@ class _HomePageState extends State<HomePage> {
                       alignment: Alignment.center,
                       child: const Text(
                         'Get My Product',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -185,11 +188,7 @@ class _HomePageState extends State<HomePage> {
                           SizedBox(width: 8),
                           Text(
                             'Shop',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -202,11 +201,7 @@ class _HomePageState extends State<HomePage> {
                       SizedBox(width: 8),
                       Text(
                         'Available Products',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
                       ),
                     ],
                   ),
@@ -231,8 +226,8 @@ class _HomePageState extends State<HomePage> {
                           mainAxisSpacing: 14,
                           children: [
                             ProductCard(name: 'Cauliflower', price: _getPriceForProduct(prices, 'Cauliflower'), imagePath: 'assets/cauliflower.jpeg'),
-                            ProductCard(name: 'Wheat', price: _getPriceForProduct(prices, 'wheat'), imagePath: 'assets/wheat_og.jpeg'),
-                            ProductCard(name: 'Cotton', price: _getPriceForProduct(prices, 'cotton'), imagePath: 'assets/cotton.jpeg'),
+                            ProductCard(name: 'Wheat', price: _getPriceForProduct(prices, 'Wheat'), imagePath: 'assets/wheat_og.jpeg'),
+                            ProductCard(name: 'Cotton', price: _getPriceForProduct(prices, 'Cotton'), imagePath: 'assets/cotton.jpeg'),
                             ProductCard(name: 'Tomato', price: _getPriceForProduct(prices, 'Tomato'), imagePath: 'assets/tomato.jpg'),
                             ProductCard(name: 'Capsicum', price: _getPriceForProduct(prices, 'Capsicum'), imagePath: 'assets/capsicum.jpg'),
                             ProductCard(name: 'Pumpkin', price: _getPriceForProduct(prices, 'Pumpkin'), imagePath: 'assets/pumpkin.jpg'),
@@ -247,7 +242,7 @@ class _HomePageState extends State<HomePage> {
                             ProductCard(name: 'Potato', price: _getPriceForProduct(prices, 'Potato'), imagePath: 'assets/potato.jpeg'),
                             ProductCard(name: 'Rice', price: _getPriceForProduct(prices, 'Rice'), imagePath: 'assets/rice.jpeg'),
                             ProductCard(name: 'Mustard', price: _getPriceForProduct(prices, 'Mustard'), imagePath: 'assets/Mustard.jpeg'),
-                            ProductCard(name: 'Cabbage', price: _getPriceForProduct(prices, 'cabbage'), imagePath: 'assets/cabbage.jpeg'),
+                            ProductCard(name: 'Cabbage', price: _getPriceForProduct(prices, 'Cabbage'), imagePath: 'assets/cabbage.jpeg'),
                             ProductCard(name: 'Apple', price: _getPriceForProduct(prices, 'Apple'), imagePath: 'assets/apple.jpg'),
                             ProductCard(name: 'Pomegranate', price: _getPriceForProduct(prices, 'Pomegranate'), imagePath: 'assets/pomegranate.jpeg'),
                           ],
@@ -307,11 +302,7 @@ class ProductCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Image.asset(
-                imagePath,
-                height: 120,
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset(imagePath, height: 120, fit: BoxFit.cover),
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),
