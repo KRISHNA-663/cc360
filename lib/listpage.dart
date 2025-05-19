@@ -6,6 +6,8 @@ import 'profilepage.dart';
 import 'wheat.dart';
 import 'cherry.dart';
 import 'lemon.dart';
+import 'models/commodity_price.dart';
+import 'services/api_services.dart';
 
 class ListPage extends StatefulWidget {
   const ListPage({Key? key}) : super(key: key);
@@ -17,6 +19,7 @@ class ListPage extends StatefulWidget {
 class _ListPageState extends State<ListPage> {
   int _selectedIndex = 1;
   String _searchQuery = '';
+  final Future<List<CommodityPrice>> _futurePrices = ApiService.fetchPrices();
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
@@ -45,6 +48,17 @@ class _ListPageState extends State<ListPage> {
           MaterialPageRoute(builder: (context) => const ProfilePage()),
         );
         break;
+    }
+  }
+
+  String _getPrice(List<CommodityPrice> prices, String productName) {
+    try {
+      final item = prices.firstWhere(
+            (element) => element.name.toLowerCase().contains(productName.toLowerCase()),
+      );
+      return 'Rs ${item.price}/Kg';
+    } catch (_) {
+      return 'Rs 10/Kg';
     }
   }
 
@@ -101,95 +115,95 @@ class _ListPageState extends State<ListPage> {
                 ),
               ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16.0),
-                  children: _filteredProducts()
-                      .map((product) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: ProductCard(
-                      image: product.image,
-                      name: product.name,
-                      family: product.family,
-                      price: product.price,
-                      color: const Color(0xFFDCE8D6),
-                      onTap: () {
-                        if (product.name.contains('Wheat')) {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) => const WheatSeedPage()));
-                        } else if (product.name.contains('Cherry')) {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) => const CherrySeedPage()));
-                        } else if (product.name.contains('Lemon')) {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) => const LemonSeedPage()));
-                        } else {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) => const ShopPage()));
-                        }
-                      },
-                    ),
-                  ))
-                      .toList(),
+                child: FutureBuilder<List<CommodityPrice>>(
+                  future: _futurePrices,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else {
+                      final prices = snapshot.data ?? [];
+                      final products = _filteredProducts(prices);
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16.0),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          final product = products[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: ProductCard(
+                              image: product.image,
+                              name: product.name,
+                              family: product.family,
+                              price: product.price,
+                              color: const Color(0xFFDCE8D6),
+                              onTap: () {
+                                if (product.name.contains('Wheat')) {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const WheatSeedPage()));
+                                } else if (product.name.contains('Cherry')) {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const CherrySeedPage()));
+                                } else if (product.name.contains('Lemon')) {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const LemonSeedPage()));
+                                } else {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const ShopPage()));
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  },
                 ),
               ),
             ],
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 3,
-              spreadRadius: 1,
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          selectedItemColor: const Color(0xFF055B1D),
-          unselectedItemColor: Colors.grey,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
-            BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-          ],
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: const Color(0xFF055B1D),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+        ],
       ),
     );
   }
 
-  List<Product> _filteredProducts() {
-    List<Product> allProducts = [
-      Product('assets/cauliflower.jpeg', 'Cauliflower', 'Brassica family', 'Rs 10/Kg'),
-      Product('assets/wheat_og.jpeg', 'Wheat', 'Triticum family', 'Rs 10/Kg'),
-      Product('assets/cotton.jpeg', 'Cotton', 'Gossypium family', 'Rs 10/Kg'),
-      Product('assets/tomato.jpg', 'Tomato', 'Solanaceae family', 'Rs 10/Kg'),
-      Product('assets/capsicum.jpg', 'Capsicum', 'Capsicum family', 'Rs 10/Kg'),
-      Product('assets/pumpkin.jpg', 'Pumpkin', 'Cucurbitaceae family', 'Rs 10/Kg'),
-      Product('assets/banana.jpg', 'Banana', 'Musaceae family', 'Rs 10/Kg'),
-      Product('assets/carrot.jpg', 'Carrot', 'Apiaceae family', 'Rs 10/Kg'),
-      Product('assets/garlic.jpeg', 'Garlic', 'Amaryllidaceae family', 'Rs 10/Kg'),
-      Product('assets/mango.jpeg', 'Mango', 'Anacardiaceae family', 'Rs 10/Kg'),
-      Product('assets/onion.jpeg', 'Onion', 'Amaryllidaceae family', 'Rs 10/Kg'),
-      Product('assets/mashrooms.jpg', 'Mushrooms', 'Fungi family', 'Rs 10/Kg'),
-      Product('assets/beans.jpg', 'Beans', 'Fabaceae family', 'Rs 10/Kg'),
-      Product('assets/brinjal.jpg', 'Brinjal', 'Solanaceae family', 'Rs 10/Kg'),
-      Product('assets/potato.jpeg', 'Potato', 'Solanaceae family', 'Rs 10/Kg'),
-      Product('assets/rice.jpeg', 'Rice', 'Oryza family', 'Rs 10/Kg'),
-      Product('assets/Mustard.jpeg', 'Mustard', 'Brassicaceae family', 'Rs 10/Kg'),
-      Product('assets/cabbage.jpeg', 'Cabbage', 'Brassicaceae family', 'Rs 10/Kg'),
-      Product('assets/apple.jpg', 'Apple', 'Rosaceae family', 'Rs 10/Kg'),
-      Product('assets/pomegranate.jpeg', 'Pomegranate', 'Lythraceae family', 'Rs 10/Kg'),
+  List<Product> _filteredProducts(List<CommodityPrice> prices) {
+    final allProducts = [
+      Product('assets/cauliflower.jpeg', 'Cauliflower', 'Brassica family', _getPrice(prices, 'Cauliflower')),
+      Product('assets/wheat_og.jpeg', 'Wheat', 'Triticum family', _getPrice(prices, 'Wheat')),
+      Product('assets/cotton.jpeg', 'Cotton', 'Gossypium family', _getPrice(prices, 'Cotton')),
+      Product('assets/tomato.jpg', 'Tomato', 'Solanaceae family', _getPrice(prices, 'Tomato')),
+      Product('assets/capsicum.jpg', 'Capsicum', 'Capsicum family', _getPrice(prices, 'Capsicum')),
+      Product('assets/pumpkin.jpg', 'Pumpkin', 'Cucurbitaceae family', _getPrice(prices, 'Pumpkin')),
+      Product('assets/banana.jpg', 'Banana', 'Musaceae family', _getPrice(prices, 'Banana')),
+      Product('assets/carrot.jpg', 'Carrot', 'Apiaceae family', _getPrice(prices, 'Carrot')),
+      Product('assets/garlic.jpeg', 'Garlic', 'Amaryllidaceae family', _getPrice(prices, 'Garlic')),
+      Product('assets/mango.jpeg', 'Mango', 'Anacardiaceae family', _getPrice(prices, 'Mango')),
+      Product('assets/onion.jpeg', 'Onion', 'Amaryllidaceae family', _getPrice(prices, 'Onion')),
+      Product('assets/mashrooms.jpg', 'Mushrooms', 'Fungi family', _getPrice(prices, 'Mushrooms')),
+      Product('assets/beans.jpg', 'Beans', 'Fabaceae family', _getPrice(prices, 'Beans')),
+      Product('assets/brinjal.jpg', 'Brinjal', 'Solanaceae family', _getPrice(prices, 'Brinjal')),
+      Product('assets/potato.jpeg', 'Potato', 'Solanaceae family', _getPrice(prices, 'Potato')),
+      Product('assets/rice.jpeg', 'Rice', 'Oryza family', _getPrice(prices, 'Rice')),
+      Product('assets/Mustard.jpeg', 'Mustard', 'Brassicaceae family', _getPrice(prices, 'Mustard')),
+      Product('assets/cabbage.jpeg', 'Cabbage', 'Brassica family', _getPrice(prices, 'Cabbage')),
+      Product('assets/apple.jpg', 'Apple', 'Rosaceae family', _getPrice(prices, 'Apple')),
+      Product('assets/pomegranate.jpeg', 'Pomegranate', 'Lythraceae family', _getPrice(prices, 'Pomegranate')),
     ];
 
-    return allProducts.where((product) {
-      return product.name.toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
+    return allProducts
+        .where((product) =>
+        product.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
   }
 }
 
@@ -211,90 +225,39 @@ class ProductCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const ProductCard({
-    Key? key,
+    super.key,
     required this.image,
     required this.name,
     required this.family,
     required this.price,
     required this.color,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 90,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(8.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 3,
-              spreadRadius: 1,
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(8.0),
-                bottomLeft: Radius.circular(8.0),
-              ),
-              child: Image.asset(
-                image,
-                width: 90,
-                height: 90,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 90,
-                    height: 90,
-                    color: Colors.grey[300],
-                    child: const Center(child: Text('Image Not Found')),
-                  );
-                },
-              ),
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+              child: Image.asset(image, height: 80, width: 80, fit: BoxFit.cover),
             ),
+            const SizedBox(width: 12),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      family,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: Text(
-                price,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(family, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                  Text(price, style: const TextStyle(fontSize: 13, color: Colors.black)),
+                ],
               ),
             ),
           ],
