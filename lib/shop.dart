@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:niral_prj/drychilly.dart';
 import 'package:niral_prj/lemon.dart';
@@ -19,28 +20,12 @@ class ShopPage extends StatefulWidget {
 
 class _ShopPageState extends State<ShopPage> {
   int _selectedIndex = 2;
+  String _searchQuery = '';
   List<Map<String, String>> favoriteItems = [];
 
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.toLowerCase();
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   void _onItemTapped(int index) {
+    if (index == _selectedIndex) return;
+
     setState(() {
       _selectedIndex = index;
     });
@@ -58,8 +43,6 @@ class _ShopPageState extends State<ShopPage> {
           context,
           MaterialPageRoute(builder: (context) => const ListPage()),
         );
-        break;
-      case 2:
         break;
       case 3:
         Navigator.push(
@@ -111,9 +94,8 @@ class _ShopPageState extends State<ShopPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final products = [
+  List<Map<String, String>> _filteredProducts() {
+    final allProducts = [
       {'name': 'Rice Seed', 'image': 'assets/Rice_Seed.jpeg'},
       {'name': 'Lemon Tree', 'image': 'assets/lemon_tree.jpeg'},
       {'name': 'Weat Seed', 'image': 'assets/wheat.jpeg'},
@@ -122,13 +104,17 @@ class _ShopPageState extends State<ShopPage> {
       {'name': 'Mango', 'image': 'assets/mango.jpeg'},
     ];
 
-    final filteredProducts = products.where((product) {
+    return allProducts.where((product) {
       final name = product['name']!.toLowerCase();
-      return name.contains(_searchQuery);
+      return name.contains(_searchQuery.toLowerCase());
     }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filteredProducts = _filteredProducts();
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80.0),
         child: AppBar(
@@ -143,7 +129,6 @@ class _ShopPageState extends State<ShopPage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: false,
           actions: [
             IconButton(
               icon: const Icon(Icons.favorite, color: Colors.white),
@@ -168,51 +153,51 @@ class _ShopPageState extends State<ShopPage> {
               ),
             ),
           ],
-          flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF055B1D), Color(0xFF077A2F)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Container(
-              height: 40,
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFDCE8D6)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  hintText: 'Search...',
-                  hintStyle: TextStyle(color: Colors.black, fontSize: 14),
-                  prefixIcon: Icon(Icons.search, color: Colors.black),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset('assets/grass.jpg', fit: BoxFit.cover),
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: Container(color: Colors.black.withOpacity(0.25)),
+          ),
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search product name...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                children: filteredProducts.map((product) {
-                  return _buildProductCard(product['name']!, product['image']!);
-                }).toList(),
+              Expanded(
+                child: GridView.count(
+                  padding: const EdgeInsets.all(16),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  children: filteredProducts.map((product) {
+                    return _buildProductCard(product['name']!, product['image']!);
+                  }).toList(),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -242,7 +227,7 @@ class _ShopPageState extends State<ShopPage> {
   }
 }
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   final String name;
   final String imagePath;
   final VoidCallback onTap;
@@ -259,59 +244,134 @@ class ProductCard extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _ProductCardState createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _moveUpAnimation;
+  late Animation<double> _fadeOutAnimation;
+  bool _showFlyingHeart = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _moveUpAnimation = Tween<double>(begin: 0, end: -50).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    _fadeOutAnimation = Tween<double>(begin: 1, end: 0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() => _showFlyingHeart = false);
+        _controller.reset();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onFavoritePressed() {
+    widget.onFavorite();
+    setState(() {
+      _showFlyingHeart = true;
+    });
+    _controller.forward();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFDCE8D6),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                ),
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                ),
-              ),
+      onTap: widget.onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFDCE8D6),
+              borderRadius: BorderRadius.circular(10),
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                        color: Colors.black,
+            child: Column(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(10),
+                      topRight: Radius.circular(10),
+                    ),
+                    child: Image.asset(
+                      widget.imagePath,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          widget.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                            color: Colors.black,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      IconButton(
+                        icon: Icon(
+                          widget.isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: widget.isFavorite ? Colors.red : Colors.grey,
+                          size: 20,
+                        ),
+                        onPressed: _onFavoritePressed,
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: Icon(
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? Colors.red : Colors.grey,
-                      size: 20,
+                ),
+              ],
+            ),
+          ),
+          if (_showFlyingHeart)
+            Positioned(
+              right: 8, // near the heart icon horizontally
+              bottom: 36, // just above the icon vertically
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, _moveUpAnimation.value),
+                    child: Opacity(
+                      opacity: _fadeOutAnimation.value,
+                      child: const Icon(
+                        Icons.favorite,
+                        color: Colors.red,
+                        size: 24,
+                      ),
                     ),
-                    onPressed: onFavorite,
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

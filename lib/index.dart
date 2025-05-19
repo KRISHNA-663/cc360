@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/api_services.dart';// Your API service file
+import 'models/commodity_price.dart';
 import 'listpage.dart';
 import 'shop.dart';
 import 'profilepage.dart';
@@ -18,10 +20,14 @@ class _HomePageState extends State<HomePage> {
   String _userName = '';
   bool _isLoading = true;
 
+  // Initialize _futurePrices immediately to avoid LateInitializationError
+  late Future<List<CommodityPrice>> _futurePrices = ApiService.fetchPrices();
+
   @override
   void initState() {
     super.initState();
     fetchUserName();
+    // _futurePrices is already initialized above
   }
 
   Future<void> fetchUserName() async {
@@ -43,6 +49,7 @@ class _HomePageState extends State<HomePage> {
     setState(() => _selectedIndex = index);
     switch (index) {
       case 0:
+      // Already on Home, do nothing
         break;
       case 1:
         Navigator.push(context, MaterialPageRoute(builder: (context) => const ListPage()));
@@ -53,6 +60,18 @@ class _HomePageState extends State<HomePage> {
       case 3:
         Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
         break;
+    }
+  }
+
+  // Helper method to get price for a product from fetched list
+  String _getPriceForProduct(List<CommodityPrice> prices, String productName) {
+    try {
+      final commodity = prices.firstWhere(
+            (element) => element.name.toLowerCase() == productName.toLowerCase(),
+      );
+      return 'Rs ${commodity.price}/kg';
+    } catch (e) {
+      return 'Price N/A';
     }
   }
 
@@ -89,7 +108,6 @@ class _HomePageState extends State<HomePage> {
                     },
                     child: const Icon(Icons.person, color: Colors.white),
                   ),
-
                 ],
               ),
             ),
@@ -193,21 +211,59 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.8,
-                    crossAxisSpacing: 14,
-                    mainAxisSpacing: 14,
-                    children: const [
-                      ProductCard(name: 'Rice Seed', price: 'Rs 10/kg', imagePath: 'assets/Rice_Seed.jpeg'),
-                      ProductCard(name: 'Lemon Tree', price: 'Rs 10/kg', imagePath: 'assets/lemon_tree.jpeg'),
-                      ProductCard(name: 'Wheat Seed', price: 'Rs 10/kg', imagePath: 'assets/wheat.jpeg'),
-                      ProductCard(name: 'Cherry Tree', price: 'Rs 10/kg', imagePath: 'assets/cherry.jpeg'),
-                      ProductCard(name: 'Mango', price: 'Rs 10/kg', imagePath: 'assets/mango.jpeg'),
-                      ProductCard(name: 'Dry Chilly', price: 'Rs 10/kg', imagePath: 'assets/drychilly2.jpeg'),
-                    ],
+                  FutureBuilder<List<CommodityPrice>>(
+                    future: _futurePrices,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(child: Text('No data available'));
+                      } else {
+                        final prices = snapshot.data!;
+                        return GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.8,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          children: [
+                            ProductCard(
+                              name: 'Rice Seed',
+                              price: _getPriceForProduct(prices, 'Rice Seed'),
+                              imagePath: 'assets/Rice_Seed.jpeg',
+                            ),
+                            ProductCard(
+                              name: 'Lemon Tree',
+                              price: _getPriceForProduct(prices, 'Lemon Tree'),
+                              imagePath: 'assets/lemon_tree.jpeg',
+                            ),
+                            ProductCard(
+                              name: 'Wheat',
+                              price: _getPriceForProduct(prices, 'Wheat'),
+                              imagePath: 'assets/wheat.jpeg',
+                            ),
+                            ProductCard(
+                              name: 'Cherry Tree',
+                              price: _getPriceForProduct(prices, 'Cherry Tree'),
+                              imagePath: 'assets/cherry.jpeg',
+                            ),
+                            ProductCard(
+                              name: 'Mango',
+                              price: _getPriceForProduct(prices, 'Mango'),
+                              imagePath: 'assets/mango.jpeg',
+                            ),
+                            ProductCard(
+                              name: 'Dry Chilly',
+                              price: _getPriceForProduct(prices, 'Dry Chilly'),
+                              imagePath: 'assets/drychilly2.jpeg',
+                            ),
+                          ],
+                        );
+                      }
+                    },
                   ),
                   const SizedBox(height: 20),
                 ],
