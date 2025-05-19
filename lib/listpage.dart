@@ -165,16 +165,26 @@ class _ListPageState extends State<ListPage> {
 
   List<Product> _filteredProducts() {
     List<Product> allProducts = [
-      Product('assets/Rice_Seed.jpeg', 'Rice Seeds', 'Oryza family', 'Rs 10/Kg'),
-      Product('assets/lemon_tree.jpeg', 'Lemon Seeds', 'Citrus family', 'Rs 10/Kg'),
-      Product('assets/wheat.jpeg', 'Wheat Seeds', 'Triticum family', 'Rs 10/Kg'),
-      Product('assets/cherry.jpeg', 'Cherry Seeds', 'Prunus family', 'Rs 10/Kg'),
-      Product('assets/drychilly2.jpeg', 'Dry Chilly', 'Capsicum family', 'Rs 10/Kg'),
-      Product('assets/Rice_Seed.jpeg', 'Rice Seeds', 'Oryza family', 'Rs 10/Kg'),
-      Product('assets/lemon_tree.jpeg', 'Lemon Seeds', 'Citrus family', 'Rs 10/Kg'),
-      Product('assets/wheat.jpeg', 'Wheat Seeds', 'Triticum family', 'Rs 10/Kg'),
-      Product('assets/cherry.jpeg', 'Cherry Seeds', 'Prunus family', 'Rs 10/Kg'),
-      Product('assets/drychilly2.jpeg', 'Dry Chilly', 'Capsicum family', 'Rs 10/Kg'),
+      Product('assets/cauliflower.jpeg', 'Cauliflower', 'Brassica family', 'Rs 10/Kg'),
+      Product('assets/wheat_og.jpeg', 'Wheat', 'Triticum family', 'Rs 10/Kg'),
+      Product('assets/cotton.jpeg', 'Cotton', 'Gossypium family', 'Rs 10/Kg'),
+      Product('assets/tomato.jpg', 'Tomato', 'Solanaceae family', 'Rs 10/Kg'),
+      Product('assets/capsicum.jpg', 'Capsicum', 'Capsicum family', 'Rs 10/Kg'),
+      Product('assets/pumpkin.jpg', 'Pumpkin', 'Cucurbitaceae family', 'Rs 10/Kg'),
+      Product('assets/banana.jpg', 'Banana', 'Musaceae family', 'Rs 10/Kg'),
+      Product('assets/carrot.jpg', 'Carrot', 'Apiaceae family', 'Rs 10/Kg'),
+      Product('assets/garlic.jpeg', 'Garlic', 'Amaryllidaceae family', 'Rs 10/Kg'),
+      Product('assets/mango.jpeg', 'Mango', 'Anacardiaceae family', 'Rs 10/Kg'),
+      Product('assets/onion.jpeg', 'Onion', 'Amaryllidaceae family', 'Rs 10/Kg'),
+      Product('assets/mashrooms.jpg', 'Mushrooms', 'Fungi family', 'Rs 10/Kg'),
+      Product('assets/beans.jpg', 'Beans', 'Fabaceae family', 'Rs 10/Kg'),
+      Product('assets/brinjal.jpg', 'Brinjal', 'Solanaceae family', 'Rs 10/Kg'),
+      Product('assets/potato.jpeg', 'Potato', 'Solanaceae family', 'Rs 10/Kg'),
+      Product('assets/rice.jpeg', 'Rice', 'Oryza family', 'Rs 10/Kg'),
+      Product('assets/Mustard.jpeg', 'Mustard', 'Brassicaceae family', 'Rs 10/Kg'),
+      Product('assets/cabbage.jpeg', 'Cabbage', 'Brassicaceae family', 'Rs 10/Kg'),
+      Product('assets/apple.jpg', 'Apple', 'Rosaceae family', 'Rs 10/Kg'),
+      Product('assets/pomegranate.jpeg', 'Pomegranate', 'Lythraceae family', 'Rs 10/Kg'),
     ];
 
     return allProducts.where((product) {

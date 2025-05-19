@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/api_services.dart';// Your API service file
+import '../services/api_services.dart'; // Your API service file
 import 'models/commodity_price.dart';
 import 'listpage.dart';
 import 'shop.dart';
@@ -49,7 +49,6 @@ class _HomePageState extends State<HomePage> {
     setState(() => _selectedIndex = index);
     switch (index) {
       case 0:
-      // Already on Home, do nothing
         break;
       case 1:
         Navigator.push(context, MaterialPageRoute(builder: (context) => const ListPage()));
@@ -63,11 +62,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Helper method to get price for a product from fetched list
+  // ✔️ Improved version for better matching
   String _getPriceForProduct(List<CommodityPrice> prices, String productName) {
     try {
       final commodity = prices.firstWhere(
-            (element) => element.name.toLowerCase() == productName.toLowerCase(),
+            (element) =>
+            element.name.toLowerCase().contains(productName.toLowerCase()),
       );
       return 'Rs ${commodity.price}/kg';
     } catch (e) {
@@ -230,36 +230,26 @@ class _HomePageState extends State<HomePage> {
                           crossAxisSpacing: 14,
                           mainAxisSpacing: 14,
                           children: [
-                            ProductCard(
-                              name: 'Rice Seed',
-                              price: _getPriceForProduct(prices, 'Rice Seed'),
-                              imagePath: 'assets/Rice_Seed.jpeg',
-                            ),
-                            ProductCard(
-                              name: 'Lemon Tree',
-                              price: _getPriceForProduct(prices, 'Lemon Tree'),
-                              imagePath: 'assets/lemon_tree.jpeg',
-                            ),
-                            ProductCard(
-                              name: 'Wheat',
-                              price: _getPriceForProduct(prices, 'Wheat'),
-                              imagePath: 'assets/wheat.jpeg',
-                            ),
-                            ProductCard(
-                              name: 'Cherry Tree',
-                              price: _getPriceForProduct(prices, 'Cherry Tree'),
-                              imagePath: 'assets/cherry.jpeg',
-                            ),
-                            ProductCard(
-                              name: 'Mango',
-                              price: _getPriceForProduct(prices, 'Mango'),
-                              imagePath: 'assets/mango.jpeg',
-                            ),
-                            ProductCard(
-                              name: 'Dry Chilly',
-                              price: _getPriceForProduct(prices, 'Dry Chilly'),
-                              imagePath: 'assets/drychilly2.jpeg',
-                            ),
+                            ProductCard(name: 'Cauliflower', price: _getPriceForProduct(prices, 'Cauliflower'), imagePath: 'assets/cauliflower.jpeg'),
+                            ProductCard(name: 'Wheat', price: _getPriceForProduct(prices, 'wheat'), imagePath: 'assets/wheat_og.jpeg'),
+                            ProductCard(name: 'Cotton', price: _getPriceForProduct(prices, 'cotton'), imagePath: 'assets/cotton.jpeg'),
+                            ProductCard(name: 'Tomato', price: _getPriceForProduct(prices, 'Tomato'), imagePath: 'assets/tomato.jpg'),
+                            ProductCard(name: 'Capsicum', price: _getPriceForProduct(prices, 'Capsicum'), imagePath: 'assets/capsicum.jpg'),
+                            ProductCard(name: 'Pumpkin', price: _getPriceForProduct(prices, 'Pumpkin'), imagePath: 'assets/pumpkin.jpg'),
+                            ProductCard(name: 'Banana', price: _getPriceForProduct(prices, 'Banana'), imagePath: 'assets/banana.jpg'),
+                            ProductCard(name: 'Carrot', price: _getPriceForProduct(prices, 'Carrot'), imagePath: 'assets/carrot.jpg'),
+                            ProductCard(name: 'Garlic', price: _getPriceForProduct(prices, 'Garlic'), imagePath: 'assets/garlic.jpeg'),
+                            ProductCard(name: 'Mango', price: _getPriceForProduct(prices, 'Mango'), imagePath: 'assets/mango.jpeg'),
+                            ProductCard(name: 'Onion', price: _getPriceForProduct(prices, 'Onion'), imagePath: 'assets/onion.jpeg'),
+                            ProductCard(name: 'Mushrooms', price: _getPriceForProduct(prices, 'Mushrooms'), imagePath: 'assets/mashrooms.jpg'),
+                            ProductCard(name: 'Beans', price: _getPriceForProduct(prices, 'Beans'), imagePath: 'assets/beans.jpg'),
+                            ProductCard(name: 'Brinjal', price: _getPriceForProduct(prices, 'Brinjal'), imagePath: 'assets/brinjal.jpg'),
+                            ProductCard(name: 'Potato', price: _getPriceForProduct(prices, 'Potato'), imagePath: 'assets/potato.jpeg'),
+                            ProductCard(name: 'Rice', price: _getPriceForProduct(prices, 'Rice'), imagePath: 'assets/rice.jpeg'),
+                            ProductCard(name: 'Mustard', price: _getPriceForProduct(prices, 'Mustard'), imagePath: 'assets/Mustard.jpeg'),
+                            ProductCard(name: 'Cabbage', price: _getPriceForProduct(prices, 'cabbage'), imagePath: 'assets/cabbage.jpeg'),
+                            ProductCard(name: 'Apple', price: _getPriceForProduct(prices, 'Apple'), imagePath: 'assets/apple.jpg'),
+                            ProductCard(name: 'Pomegranate', price: _getPriceForProduct(prices, 'Pomegranate'), imagePath: 'assets/pomegranate.jpeg'),
                           ],
                         );
                       }
