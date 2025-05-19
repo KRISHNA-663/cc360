@@ -29,26 +29,17 @@ class _RiceSeedpageState extends State<RiceSeedpage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
-          (route) => false,
+              (route) => false,
         );
         break;
       case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ListPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ListPage()));
         break;
       case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ShopPage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ShopPage()));
         break;
       case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfilePage()),
-        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
         break;
     }
   }
@@ -120,14 +111,12 @@ class _RiceSeedpageState extends State<RiceSeedpage> {
                 children: [
                   const Text(
                     'Rice Seeds',
-                     
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  
                   IconButton(
                     onPressed: _viewCart,
                     icon: const Icon(Icons.shopping_bag),
@@ -205,13 +194,13 @@ class _RiceSeedpageState extends State<RiceSeedpage> {
               padding: const EdgeInsets.all(16.0),
               children: _filteredProducts()
                   .map((product) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: ProductCard(
-                          product: product,
-                          color: const Color(0xFFE0EAD8),
-                          onAddToCart: () => _addToCart(product),
-                        ),
-                      ))
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: ProductCard(
+                  product: product,
+                  color: const Color(0xFFE0EAD8),
+                  onAddToCart: () => _addToCart(product),
+                ),
+              ))
                   .toList(),
             ),
           ),
@@ -234,7 +223,7 @@ class _RiceSeedpageState extends State<RiceSeedpage> {
   }
 }
 
-// Product class
+// Product model
 class Product {
   final String image;
   final String name;
@@ -245,7 +234,7 @@ class Product {
   Product(this.image, this.name, this.family, this.location, this.price);
 }
 
-// Product Card Widget
+// Product card
 class ProductCard extends StatelessWidget {
   final Product product;
   final Color color;
@@ -313,6 +302,7 @@ class ProductCard extends StatelessWidget {
   }
 }
 
+// Cart Page
 class CartPage extends StatelessWidget {
   final List<Product> cartItems;
 
@@ -323,65 +313,57 @@ class CartPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF055B1D),
-        iconTheme: const IconThemeData(
-          color: Colors.white, // Changes the arrow icon to white
-        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           'Your Cart',
-          style: TextStyle(
-            color: Colors.white, // Set text color to white
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
         ),
       ),
       body: cartItems.isEmpty
           ? const Center(child: Text('Cart is empty'))
           : ListView.builder(
-              itemCount: cartItems.length,
-              itemBuilder: (context, index) {
-                final product = cartItems[index];
-                return ListTile(
-                  leading: Image.asset(
-                    product.image,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  ),
-                  title: Text(product.name),
-                  subtitle: Text(product.price),
-                );
-              },
+        itemCount: cartItems.length,
+        itemBuilder: (context, index) {
+          final product = cartItems[index];
+          return ListTile(
+            leading: Image.asset(
+              product.image,
+              width: 50,
+              height: 50,
+              fit: BoxFit.cover,
             ),
+            title: Text(product.name),
+            subtitle: Text(product.price),
+          );
+        },
+      ),
       bottomNavigationBar: cartItems.isEmpty
           ? null
           : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF055B1D),
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () {
-                  // Handle place order logic here
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Order placed successfully!')),
-                  );
-                },
-                child: const Text(
-  'Place Order',
-  style: TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.bold,
-    color: Colors.white, // <-- added this line
-  ),
-),
-
-              ),
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF055B1D),
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
+          ),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Order placed successfully!')),
+            );
+          },
+          child: const Text(
+            'Place Order',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

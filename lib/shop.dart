@@ -62,24 +62,16 @@ class _ShopPageState extends State<ShopPage> {
       isFavorite: isFav,
       onTap: () {
         switch (name) {
-          case 'Rice Seed':
-            Navigator.push(context, MaterialPageRoute(builder: (_) => RiceSeedpage()));
-            break;
-          case 'Lemon Tree':
-            Navigator.push(context, MaterialPageRoute(builder: (_) => LemonSeedPage()));
-            break;
-          case 'Weat Seed':
+          case 'Wheat Seed':
             Navigator.push(context, MaterialPageRoute(builder: (_) => WheatSeedPage()));
-            break;
-          case 'Cherry Tree':
-            Navigator.push(context, MaterialPageRoute(builder: (_) => CherrySeedPage()));
-            break;
-          case 'Dry Chilly':
-            Navigator.push(context, MaterialPageRoute(builder: (_) => DryChillySeedPage()));
             break;
           case 'Mango':
             Navigator.push(context, MaterialPageRoute(builder: (_) => MangoSeedPage()));
             break;
+          case 'Rice Seed':
+            Navigator.push(context, MaterialPageRoute(builder: (_) => RiceSeedpage()));
+            break;
+
         }
       },
       onFavorite: () {
@@ -96,13 +88,30 @@ class _ShopPageState extends State<ShopPage> {
 
   List<Map<String, String>> _filteredProducts() {
     final allProducts = [
-      {'name': 'Rice Seed', 'image': 'assets/Rice_Seed.jpeg'},
-      {'name': 'Lemon Tree', 'image': 'assets/lemon_tree.jpeg'},
-      {'name': 'Weat Seed', 'image': 'assets/wheat.jpeg'},
-      {'name': 'Cherry Tree', 'image': 'assets/cherry.jpeg'},
-      {'name': 'Dry Chilly', 'image': 'assets/drychilly2.jpeg'},
+      {'name': 'Wheat Seed', 'image': 'assets/wheat_og.jpeg'},
       {'name': 'Mango', 'image': 'assets/mango.jpeg'},
+      {'name': 'Rice Seed', 'image': 'assets/rice.jpeg'},
+      {'name': 'Cauliflower', 'image': 'assets/cauliflower.jpeg'},
+      {'name': 'Cotton', 'image': 'assets/cotton.jpeg'},
+      {'name': 'Tomato', 'image': 'assets/tomato.jpg'},
+      {'name': 'Capsicum', 'image': 'assets/capsicum.jpg'},
+      {'name': 'Pumpkin', 'image': 'assets/pumpkin.jpg'},
+      {'name': 'Banana', 'image': 'assets/banana.jpg'},
+      {'name': 'Carrot', 'image': 'assets/carrot.jpg'},
+      {'name': 'Garlic', 'image': 'assets/garlic.jpeg'},
+      {'name': 'Onion', 'image': 'assets/onion.jpeg'},
+      {'name': 'Mushrooms', 'image': 'assets/mashrooms.jpg'},
+      {'name': 'Beans', 'image': 'assets/beans.jpg'},
+      {'name': 'Brinjal', 'image': 'assets/brinjal.jpg'},
+      {'name': 'Potato', 'image': 'assets/potato.jpeg'},
+      {'name': 'Rice', 'image': 'assets/rice.jpeg'},
+      {'name': 'Wheat', 'image': 'assets/wheat_og.jpeg'},
+      {'name': 'Mustard', 'image': 'assets/Mustard.jpeg'},
+      {'name': 'Cabbage', 'image': 'assets/cabbage.jpeg'},
+      {'name': 'Apple', 'image': 'assets/apple.jpg'},
+      {'name': 'Pomegranate', 'image': 'assets/pomegranate.jpeg'},
     ];
+
 
     return allProducts.where((product) {
       final name = product['name']!.toLowerCase();
