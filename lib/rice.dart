@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:math';
+
+import 'package:flutter/material.dart';
 
 class RiceSeedPage extends StatefulWidget {
   const RiceSeedPage({super.key});
@@ -47,13 +49,22 @@ class _RiceSeedPageState extends State<RiceSeedPage> {
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return CartPage(cartItems: _cart, onPlaceOrder: _placeOrder);
+        return CartPage(cartItems: _cart, onPlaceOrder: _showBiddingDialog);
       },
     );
   }
 
+  void _showBiddingDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => BiddingDialog(
+        onBiddingComplete: _placeOrder,
+      ),
+    );
+  }
+
   void _placeOrder() {
-    Navigator.pop(context); // Close the cart sheet
+    Navigator.pop(context); // Close the bidding dialog (if any)
     Future.delayed(const Duration(milliseconds: 100), () {
       showDialog(
         context: context,
@@ -377,6 +388,93 @@ class CartPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class BiddingDialog extends StatefulWidget {
+  final VoidCallback onBiddingComplete;
+
+  const BiddingDialog({super.key, required this.onBiddingComplete});
+
+  @override
+  State<BiddingDialog> createState() => _BiddingDialogState();
+}
+
+class _BiddingDialogState extends State<BiddingDialog> {
+  final TextEditingController _bidController = TextEditingController();
+  int _secondsLeft = 60;
+  bool _hasSubmittedBid = false;
+  bool _timerEnded = false;
+  Timer? _timer;
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsLeft == 0) {
+        timer.cancel();
+        setState(() {
+          _timerEnded = true;
+        });
+      } else {
+        setState(() {
+          _secondsLeft--;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _bidController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Bidding - Ensure Fair Pricing"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _bidController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: "Enter your bid price (Rs)",
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_hasSubmittedBid && !_timerEnded)
+            Text("Time remaining: $_secondsLeft seconds"),
+          if (_timerEnded)
+            const Text("Bidding time completed. You can now proceed."),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            if (!_hasSubmittedBid) {
+              if (_bidController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter your bid first.')),
+                );
+                return;
+              }
+              setState(() {
+                _hasSubmittedBid = true;
+              });
+              _startTimer();
+            } else if (_timerEnded) {
+              Navigator.pop(context);
+              widget.onBiddingComplete();
+            }
+          },
+          child: Text(_hasSubmittedBid
+              ? (_timerEnded ? "Proceed" : "Wait...")
+              : "Submit Bid"),
+        ),
+      ],
     );
   }
 }
