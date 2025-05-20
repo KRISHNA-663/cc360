@@ -69,7 +69,7 @@ class _ShopPageState extends State<ShopPage> {
             Navigator.push(context, MaterialPageRoute(builder: (_) => MangoSeedPage()));
             break;
           case 'Rice Seed':
-            Navigator.push(context, MaterialPageRoute(builder: (_) => RiceSeedpage()));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => RiceSeedPage()));
             break;
 
         }

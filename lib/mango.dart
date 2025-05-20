@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 class MangoSeedPage extends StatefulWidget {
   const MangoSeedPage({super.key});
@@ -14,72 +15,21 @@ class _MangoSeedPageState extends State<MangoSeedPage> {
   final List<Product> _cart = [];
 
   final List<Product> _products = [
-    Product(
-      image: 'assets/mango/MangoAlphonso.jpg',
-      name: 'Mango - Alphonso',
-      family: 'Anacardiaceae family',
-      location: 'Salem',
-      price: 'Rs 150/Kg',
-    ),
-    Product(
-      image: 'assets/mango/MangoTotapuri.jpg',
-      name: 'Mango - Totapuri',
-      family: 'Anacardiaceae family',
-      location: 'Coimbatore',
-      price: 'Rs 120/Kg',
-    ),
-    Product(
-      image: 'assets/mango/MangoHybrid.jpg',
-      name: 'Mango - Hybrid',
-      family: 'Anacardiaceae family',
-      location: 'Madurai',
-      price: 'Rs 140/Kg',
-    ),
-    Product(
-      image: 'assets/mango/MangoOrganic.jpg',
-      name: 'Mango - Organic',
-      family: 'Anacardiaceae family',
-      location: 'Tiruppur',
-      price: 'Rs 180/Kg',
-    ),
-    Product(
-      image: 'assets/mango/MangoBanganapalli.jpg',
-      name: 'Mango - Banganapalli',
-      family: 'Anacardiaceae family',
-      location: 'Erode',
-      price: 'Rs 130/Kg',
-    ),
-    Product(
-      image: 'assets/mango/MangoNeelam.jpg',
-      name: 'Mango - Neelam',
-      family: 'Anacardiaceae family',
-      location: 'Karur',
-      price: 'Rs 110/Kg',
-    ),
-    Product(
-      image: 'assets/mango/MangoLocal.jpg',
-      name: 'Mango - Local',
-      family: 'Anacardiaceae family',
-      location: 'Tirunelveli',
-      price: 'Rs 100/Kg',
-    ),
-    Product(
-      image: 'assets/mango/MangoPremium.jpg',
-      name: 'Mango - Premium',
-      family: 'Anacardiaceae family',
-      location: 'Palakkad',
-      price: 'Rs 160/Kg',
-    ),
+    Product(image: 'assets/mango/MangoAlphonso.jpg', name: 'Mango - Alphonso', family: 'Anacardiaceae family', location: 'Salem', price: 'Rs 150/Kg'),
+    Product(image: 'assets/mango/MangoTotapuri.jpg', name: 'Mango - Totapuri', family: 'Anacardiaceae family', location: 'Coimbatore', price: 'Rs 120/Kg'),
+    Product(image: 'assets/mango/MangoHybrid.jpg', name: 'Mango - Hybrid', family: 'Anacardiaceae family', location: 'Madurai', price: 'Rs 140/Kg'),
+    Product(image: 'assets/mango/MangoOrganic.jpg', name: 'Mango - Organic', family: 'Anacardiaceae family', location: 'Tiruppur', price: 'Rs 180/Kg'),
+    Product(image: 'assets/mango/MangoBanganapalli.jpg', name: 'Mango - Banganapalli', family: 'Anacardiaceae family', location: 'Erode', price: 'Rs 130/Kg'),
+    Product(image: 'assets/mango/MangoNeelam.jpg', name: 'Mango - Neelam', family: 'Anacardiaceae family', location: 'Karur', price: 'Rs 110/Kg'),
+    Product(image: 'assets/mango/MangoLocal.jpg', name: 'Mango - Local', family: 'Anacardiaceae family', location: 'Tirunelveli', price: 'Rs 100/Kg'),
+    Product(image: 'assets/mango/MangoPremium.jpg', name: 'Mango - Premium', family: 'Anacardiaceae family', location: 'Palakkad', price: 'Rs 160/Kg'),
   ];
 
   List<Product> get _filteredProducts {
     return _products.where((product) {
-      final matchesName =
-      product.name.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesLocation = _locationFilter.isEmpty ||
-          product.location.toLowerCase().contains(_locationFilter.toLowerCase());
-      final matchesKg = _kgFilter.isEmpty ||
-          product.price.toLowerCase().contains(_kgFilter.toLowerCase());
+      final matchesName = product.name.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesLocation = _locationFilter.isEmpty || product.location.toLowerCase().contains(_locationFilter.toLowerCase());
+      final matchesKg = _kgFilter.isEmpty || product.price.toLowerCase().contains(_kgFilter.toLowerCase());
       return matchesName && matchesLocation && matchesKg;
     }).toList();
   }
@@ -104,11 +54,111 @@ class _MangoSeedPageState extends State<MangoSeedPage> {
 
   void _placeOrder() {
     Navigator.pop(context);
+    Future.delayed(const Duration(milliseconds: 100), () {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Logistics Service"),
+          content: const Text("Do you want to avail logistics service?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _showOrderPlacedDialog();
+              },
+              child: const Text("No"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _showDriverSelection();
+              },
+              child: const Text("Yes"),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  void _showDriverSelection() {
+    final List<Driver> drivers = [
+      Driver(name: 'Arjun', plate: 'TN-45', phone: _generatePhoneNumber()),
+      Driver(name: 'Ravi', plate: 'TN-38', phone: _generatePhoneNumber()),
+      Driver(name: 'Mani', plate: 'TN-67', phone: _generatePhoneNumber()),
+      Driver(name: 'Kumar', plate: 'TN-22', phone: _generatePhoneNumber()),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return SizedBox(
+          height: 300,
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(12.0),
+                child: Text('Select a Driver', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: drivers.length,
+                  itemBuilder: (context, index) {
+                    final driver = drivers[index];
+                    return ListTile(
+                      leading: const Icon(Icons.local_shipping),
+                      title: Text('Driver: ${driver.name} (${driver.plate})'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          _showDriverInfo(driver);
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDriverInfo(Driver driver) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Driver Assigned"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("The driver will contact you shortly.\n"),
+            Text("Name: ${driver.name}"),
+            Text("Contact: ${driver.phone}"),
+            Text("Vehicle: ${driver.plate}"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showOrderPlacedDialog();
+            },
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showOrderPlacedDialog() {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Order Placed"),
-        content: const Text("Your order was placed successfully!"),
+        content: const Text("Your mango seed order was placed successfully!"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -122,19 +172,17 @@ class _MangoSeedPageState extends State<MangoSeedPage> {
     });
   }
 
+  String _generatePhoneNumber() {
+    final rnd = Random();
+    return '9${rnd.nextInt(9)}${rnd.nextInt(10)}${rnd.nextInt(10)}-${rnd.nextInt(900000) + 100000}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE0EAD8),
       appBar: AppBar(
-        title: const Text(
-          'Mango Seeds',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
+        title: const Text('Mango Seeds', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22)),
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart, color: Colors.white),
@@ -146,7 +194,6 @@ class _MangoSeedPageState extends State<MangoSeedPage> {
       ),
       body: Column(
         children: [
-          // Filters
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
@@ -189,8 +236,6 @@ class _MangoSeedPageState extends State<MangoSeedPage> {
               ],
             ),
           ),
-
-          // List
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(12.0),
@@ -213,10 +258,7 @@ class _MangoSeedPageState extends State<MangoSeedPage> {
                         errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported),
                       ),
                     ),
-                    title: Text(
-                      product.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -229,13 +271,7 @@ class _MangoSeedPageState extends State<MangoSeedPage> {
                             ],
                           ),
                         ),
-                        Text(
-                          product.price,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
+                        Text(product.price, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
                       ],
                     ),
                     trailing: IconButton(
@@ -258,6 +294,8 @@ class _MangoSeedPageState extends State<MangoSeedPage> {
   }
 }
 
+// === Supporting Classes ===
+
 class Product {
   final String image;
   final String name;
@@ -274,15 +312,19 @@ class Product {
   });
 }
 
+class Driver {
+  final String name;
+  final String plate;
+  final String phone;
+
+  Driver({required this.name, required this.plate, required this.phone});
+}
+
 class CartPage extends StatelessWidget {
   final List<Product> cartItems;
   final VoidCallback onPlaceOrder;
 
-  const CartPage({
-    super.key,
-    required this.cartItems,
-    required this.onPlaceOrder,
-  });
+  const CartPage({super.key, required this.cartItems, required this.onPlaceOrder});
 
   @override
   Widget build(BuildContext context) {
@@ -292,10 +334,7 @@ class CartPage extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.all(12.0),
-            child: Text(
-              'Your Cart',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            child: Text('Your Cart', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           ),
           Expanded(
             child: cartItems.isEmpty
@@ -316,9 +355,8 @@ class CartPage extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onPlaceOrder,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green[800],
-                padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
               child: const Text('Place Order'),
             ),

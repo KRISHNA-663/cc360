@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui'; // For blur effect
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,7 +10,7 @@ import 'listpage.dart';
 import 'index.dart';
 import 'shop.dart';
 import 'framerlogin.dart';
-import 'welcome_screen.dart'; // <-- Add this import
+import 'welcome_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -134,7 +134,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     Text(
                       isLoading ? 'Loading...' : 'Welcome, $name',
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const Icon(Icons.person, color: Colors.white, size: 24),
                   ],
@@ -156,26 +157,44 @@ class _ProfilePageState extends State<ProfilePage> {
           isLoading
               ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 100.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 120.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                GestureDetector(onTap: _pickAndUploadImage, child: imageWidget),
-                const SizedBox(height: 20),
-                Text("Name: ${name.isNotEmpty ? name : 'Not set'}", style: const TextStyle(fontSize: 16, color: Colors.white)),
-                const SizedBox(height: 8),
-                Text("Email: $email", style: const TextStyle(fontSize: 16, color: Colors.white)),
-                const SizedBox(height: 8),
-                Text("Location: ${location.isNotEmpty ? location : 'Not set'}", style: const TextStyle(fontSize: 16, color: Colors.white)),
-                const SizedBox(height: 20),
+                Center(child: GestureDetector(onTap: _pickAndUploadImage, child: imageWidget)),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white30),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Name: ${name.isNotEmpty ? name : 'Not set'}",
+                          style: const TextStyle(fontSize: 16, color: Colors.white)),
+                      const SizedBox(height: 8),
+                      Text("Email: $email",
+                          style: const TextStyle(fontSize: 16, color: Colors.white)),
+                      const SizedBox(height: 8),
+                      Text("Location: ${location.isNotEmpty ? location : 'Not set'}",
+                          style: const TextStyle(fontSize: 16, color: Colors.white)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _navigateToEditProfile,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF055B1D),
+                    backgroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Edit Profile', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: const Text('Edit Profile',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
@@ -190,27 +209,29 @@ class _ProfilePageState extends State<ProfilePage> {
                     }
                   },
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.grey),
+                    side: const BorderSide(color: Colors.black),
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Text('Logout', style: TextStyle(color: Colors.black, fontSize: 16)),
+                      Text('Logout', style: TextStyle(color: Colors.white, fontSize: 16)),
                       SizedBox(width: 8),
-                      Icon(Icons.logout, color: Colors.black, size: 20),
+                      Icon(Icons.logout, color: Colors.white, size: 20),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => const LoginPage()));
                   },
                   child: const Text(
                     'Do you want to be a seller?',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF055B1D)),
+                    style: TextStyle(fontSize: 14, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -235,7 +256,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// EditProfilePage code unchanged
+// EditProfilePage unchanged
 class EditProfilePage extends StatefulWidget {
   final String name;
   final String location;
@@ -274,36 +295,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
         appBar: AppBar(title: const Text("Edit Profile"), backgroundColor: const Color(0xFF055B1D)),
         body: Padding(
-        padding: const EdgeInsets.all(20.0),
-    child: Form(
-    key: _formKey,
-    child: Column(
-    children: [
-    TextFormField(
-    controller: nameController,
-    decoration: const InputDecoration(labelText: "Name"),
-    validator: (value) => value!.isEmpty ? 'Enter name' : null,
-    ),
-    const SizedBox(height: 20),
-    TextFormField(
-    controller: locationController,
-    decoration: const InputDecoration(labelText: "Location"),
-    validator: (value) => value!.isEmpty ? 'Enter location' : null,
-    ),
-    const SizedBox(height: 30),
-      ElevatedButton(
-        onPressed: _saveProfile,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF055B1D),
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-        ),
-        child: const Text("Save", style: TextStyle(fontSize: 16)),
-      ),
-    ],
-    ),
-    ),
-        ),
-    );
+          padding: const EdgeInsets.all(20.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: "Name"),
+                  validator: (value) => value!.isEmpty ? 'Enter name' : null,
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: locationController,
+                  decoration: const InputDecoration(labelText: "Location"),
+                  validator: (value) => value!.isEmpty ? 'Enter location' : null,
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: _saveProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  ),
+                  child: const Text("Save",
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
+                ),
+              ],
+            ),
+          ),
+        ));
   }
 }
-

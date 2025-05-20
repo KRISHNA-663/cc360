@@ -1,183 +1,237 @@
 import 'package:flutter/material.dart';
-import 'index.dart';
-import 'shop.dart';
-import 'listpage.dart';
-import 'profilepage.dart';
+import 'dart:math';
 
-class RiceSeedpage extends StatefulWidget {
-  const RiceSeedpage({Key? key}) : super(key: key);
+class RiceSeedPage extends StatefulWidget {
+  const RiceSeedPage({super.key});
 
   @override
-  _RiceSeedpageState createState() => _RiceSeedpageState();
+  State<RiceSeedPage> createState() => _RiceSeedPageState();
 }
 
-class _RiceSeedpageState extends State<RiceSeedpage> {
-  int _selectedIndex = 2;
+class _RiceSeedPageState extends State<RiceSeedPage> {
   String _searchQuery = '';
   String _kgFilter = '';
   String _locationFilter = '';
+  final List<Product> _cart = [];
 
-  final List<Product> _cartItems = [];
+  final List<Product> _products = [
+    Product(image: 'assets/riceseedpremimum.jpg', name: 'Rice Seeds - Elite', family: 'Muthiah family', location: 'Karur', price: 'Rs 40/Kg'),
+    Product(image: 'assets/riceseeddrum.jpg', name: 'Rice Seeds - Durum', family: 'Chinnasamy family', location: 'Tirunelveli', price: 'Rs 55/Kg'),
+    Product(image: 'assets/riceseeedhybrid.jpg', name: 'Rice Seeds - Hybrid', family: 'Karuppan family', location: 'Palakkad', price: 'Rs 30/Kg'),
+    Product(image: 'assets/riceseedlocal.jpg', name: 'Rice Seeds - Local', family: 'Periyasamy family', location: 'Tiruppur', price: 'Rs 25/Kg'),
+    Product(image: 'assets/riceseedorganic.jpg', name: 'Rice Seeds - Organic', family: 'Muthulakshmi family', location: 'Coimbatore', price: 'Rs 50/Kg'),
+    Product(image: 'assets/riceseedpremimum.jpg', name: 'Rice Seeds - Elite', family: 'Velu family', location: 'Madurai', price: 'Rs 45/Kg'),
+    Product(image: 'assets/riceseedsoft.jpg', name: 'Rice Seeds - Soft', family: 'Ponnamma family', location: 'Salem', price: 'Rs 35/Kg'),
+    Product(image: 'assets/riceseedspring.jpg', name: 'Rice Seeds - Spring', family: 'Vellaiyamma family', location: 'Erode', price: 'Rs 60/Kg'),
+  ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    switch (index) {
-      case 0:
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-              (route) => false,
-        );
-        break;
-      case 1:
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const ListPage()));
-        break;
-      case 2:
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const ShopPage()));
-        break;
-      case 3:
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
-        break;
-    }
+  List<Product> get _filteredProducts {
+    return _products.where((product) {
+      final matchesName = product.name.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesLocation = _locationFilter.isEmpty || product.location.toLowerCase().contains(_locationFilter.toLowerCase());
+      final matchesKg = _kgFilter.isEmpty || product.price.toLowerCase().contains(_kgFilter.toLowerCase());
+      return matchesName && matchesLocation && matchesKg;
+    }).toList();
   }
 
   void _addToCart(Product product) {
     setState(() {
-      _cartItems.add(product);
+      _cart.add(product);
     });
-
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${product.name} added to cart'),
-        duration: const Duration(seconds: 1),
-      ),
+      SnackBar(content: Text('${product.name} added to cart')),
     );
   }
 
-  void _viewCart() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CartPage(cartItems: _cartItems),
-      ),
+  void _showCart() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return CartPage(cartItems: _cart, onPlaceOrder: _placeOrder);
+      },
     );
   }
 
-  List<Product> _filteredProducts() {
-    List<Product> allProducts = [
-      Product('assets/riceseedpremimum.jpg', 'Rice Seeds - Elite', 'Muthiah family', 'Karur', 'Rs 40/Kg'),
-      Product('assets/riceseeddrum.jpg', 'Rice Seeds - Durum', 'Chinnasamy family', 'Tirunelveli', 'Rs 55/Kg'),
-      Product('assets/riceseeedhybrid.jpg', 'Rice Seeds - Hybrid', 'Karuppan family', 'Palakkad', 'Rs 30/Kg'),
-      Product('assets/riceseedlocal.jpg', 'Rice Seeds - Local', 'Periyasamy family', 'Tiruppur', 'Rs 25/Kg'),
-      Product('assets/riceseedorganic.jpg', 'Rice Seeds - Organic', 'Muthulakshmi family', 'Coimbatore', 'Rs 50/Kg'),
-      Product('assets/riceseedpremimum.jpg', 'Rice Seeds - Elite', 'Velu family', 'Madurai', 'Rs 45/Kg'),
-      Product('assets/riceseedsoft.jpg', 'Rice Seeds - Soft', 'Ponnamma family', 'Salem', 'Rs 35/Kg'),
-      Product('assets/riceseedspring.jpg', 'Rice Seeds - Spring', 'Vellaiyamma family', 'Erode', 'Rs 60/Kg'),
+  void _placeOrder() {
+    Navigator.pop(context); // Close the cart sheet
+    Future.delayed(const Duration(milliseconds: 100), () {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Logistics Service"),
+          content: const Text("Do you want to avail logistics service?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                _showOrderPlacedDialog();
+              },
+              child: const Text("No"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                _showDriverSelection();
+              },
+              child: const Text("Yes"),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  void _showDriverSelection() {
+    final List<Driver> drivers = [
+      Driver(name: 'Arjun', plate: 'TN-45', phone: _generatePhoneNumber()),
+      Driver(name: 'Ravi', plate: 'TN-38', phone: _generatePhoneNumber()),
+      Driver(name: 'Mani', plate: 'TN-67', phone: _generatePhoneNumber()),
+      Driver(name: 'Kumar', plate: 'TN-22', phone: _generatePhoneNumber()),
     ];
 
-    return allProducts.where((product) {
-      final matchesName = product.name.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesLocation = _locationFilter.isEmpty ||
-          product.location.toLowerCase().contains(_locationFilter.toLowerCase());
-      final matchesKg = _kgFilter.isEmpty ||
-          product.price.toLowerCase().contains(_kgFilter.toLowerCase());
-      return matchesName && matchesLocation && matchesKg;
-    }).toList();
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return SizedBox(
+          height: 300,
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(12.0),
+                child: Text(
+                  'Select a Driver',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: drivers.length,
+                  itemBuilder: (context, index) {
+                    final driver = drivers[index];
+                    return ListTile(
+                      leading: const Icon(Icons.local_shipping),
+                      title: Text('Driver: ${driver.name} (${driver.plate})'),
+                      onTap: () {
+                        Navigator.pop(context); // Close bottom sheet
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          _showDriverInfo(driver);
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDriverInfo(Driver driver) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Driver Assigned"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("The driver will contact you shortly.\n"),
+            Text("Name: ${driver.name}"),
+            Text("Contact: ${driver.phone}"),
+            Text("Vehicle: ${driver.plate}"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showOrderPlacedDialog();
+            },
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showOrderPlacedDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Order Placed"),
+        content: const Text("Your rice seed order was placed successfully!"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+    setState(() {
+      _cart.clear();
+    });
+  }
+
+  String _generatePhoneNumber() {
+    final rnd = Random();
+    return '9${rnd.nextInt(9)}${rnd.nextInt(10)}${rnd.nextInt(10)}-${rnd.nextInt(900000) + 100000}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80.0),
-        child: AppBar(
-          backgroundColor: const Color(0xFF055B1D),
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          flexibleSpace: SafeArea(
-            child: Container(
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 46.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Rice Seeds',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _viewCart,
-                    icon: const Icon(Icons.shopping_bag),
-                    color: Colors.white,
-                  ),
-                ],
-              ),
-            ),
-          ),
+      backgroundColor: const Color(0xFFE0EAD8),
+      appBar: AppBar(
+        title: const Text(
+          'Rice Seeds',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_cart, color: Colors.white),
+            onPressed: _showCart,
+          ),
+        ],
+        centerTitle: true,
+        backgroundColor: const Color(0xFF055B1D),
       ),
       body: Column(
         children: [
-          // Filters
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(12.0),
             child: Column(
               children: [
                 TextField(
-                  onChanged: (value) {
-                    setState(() => _searchQuery = value);
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search product name...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                  decoration: const InputDecoration(
+                    hintText: 'Search by name...',
+                    prefixIcon: Icon(Icons.search),
                     filled: true,
                     fillColor: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
-                        onChanged: (value) {
-                          setState(() => _kgFilter = value);
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Kg range...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
+                        onChanged: (value) => setState(() => _kgFilter = value),
+                        decoration: const InputDecoration(
+                          hintText: 'Kg range',
                           filled: true,
                           fillColor: Colors.white,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
-                        onChanged: (value) {
-                          setState(() => _locationFilter = value);
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Location...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
+                        onChanged: (value) => setState(() => _locationFilter = value),
+                        decoration: const InputDecoration(
+                          hintText: 'Location',
                           filled: true,
                           fillColor: Colors.white,
                         ),
@@ -188,42 +242,67 @@ class _RiceSeedpageState extends State<RiceSeedpage> {
               ],
             ),
           ),
-          // Product List
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: _filteredProducts()
-                  .map((product) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: ProductCard(
-                  product: product,
-                  color: const Color(0xFFE0EAD8),
-                  onAddToCart: () => _addToCart(product),
-                ),
-              ))
-                  .toList(),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(12.0),
+              itemCount: _filteredProducts.length,
+              itemBuilder: (context, index) {
+                final product = _filteredProducts[index];
+                return Card(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        product.image,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported),
+                      ),
+                    ),
+                    title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(product.family),
+                              Text(product.location),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          product.price,
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                        ),
+                      ],
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.add_shopping_cart),
+                      color: Colors.green[800],
+                      iconSize: 28,
+                      onPressed: () => _addToCart(product),
+                      tooltip: 'Add to Cart',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF006400),
-        unselectedItemColor: Colors.grey,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Shop'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),
     );
   }
 }
 
-// Product model
 class Product {
   final String image;
   final String name;
@@ -231,138 +310,72 @@ class Product {
   final String location;
   final String price;
 
-  Product(this.image, this.name, this.family, this.location, this.price);
+  Product({
+    required this.image,
+    required this.name,
+    required this.family,
+    required this.location,
+    required this.price,
+  });
 }
 
-// Product card
-class ProductCard extends StatelessWidget {
-  final Product product;
-  final Color color;
-  final VoidCallback onAddToCart;
+class Driver {
+  final String name;
+  final String plate;
+  final String phone;
 
-  const ProductCard({
-    Key? key,
-    required this.product,
-    required this.color,
-    required this.onAddToCart,
-  }) : super(key: key);
+  Driver({required this.name, required this.plate, required this.phone});
+}
+
+class CartPage extends StatelessWidget {
+  final List<Product> cartItems;
+  final VoidCallback onPlaceOrder;
+
+  const CartPage({
+    super.key,
+    required this.cartItems,
+    required this.onPlaceOrder,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 100,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Row(
+    return SizedBox(
+      height: 400,
+      child: Column(
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8.0),
-              bottomLeft: Radius.circular(8.0),
-            ),
-            child: Image.asset(
-              product.image,
-              width: 90,
-              height: 100,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: 90,
-                height: 100,
-                color: Colors.grey[300],
-                child: const Center(child: Text('Image Not Found')),
-              ),
+          const Padding(
+            padding: EdgeInsets.all(12.0),
+            child: Text(
+              'Your Cart',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(product.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(product.family, style: const TextStyle(fontSize: 14)),
-                  Text(product.location, style: const TextStyle(fontSize: 14)),
-                  Text(product.price,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                ],
-              ),
+            child: cartItems.isEmpty
+                ? const Center(child: Text('No items in cart.'))
+                : ListView.builder(
+              itemCount: cartItems.length,
+              itemBuilder: (context, index) {
+                final item = cartItems[index];
+                return ListTile(
+                  title: Text(item.name),
+                  subtitle: Text(item.price),
+                );
+              },
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.add_shopping_cart),
-            onPressed: onAddToCart,
-            color: Colors.black87,
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: onPlaceOrder,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('Place Order'),
+            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Cart Page
-class CartPage extends StatelessWidget {
-  final List<Product> cartItems;
-
-  const CartPage({Key? key, required this.cartItems}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF055B1D),
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Your Cart',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: cartItems.isEmpty
-          ? const Center(child: Text('Cart is empty'))
-          : ListView.builder(
-        itemCount: cartItems.length,
-        itemBuilder: (context, index) {
-          final product = cartItems[index];
-          return ListTile(
-            leading: Image.asset(
-              product.image,
-              width: 50,
-              height: 50,
-              fit: BoxFit.cover,
-            ),
-            title: Text(product.name),
-            subtitle: Text(product.price),
-          );
-        },
-      ),
-      bottomNavigationBar: cartItems.isEmpty
-          ? null
-          : Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF055B1D),
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Order placed successfully!')),
-            );
-          },
-          child: const Text(
-            'Place Order',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
       ),
     );
   }
